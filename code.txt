@@ -1,0 +1,57 @@
+import csv
+import string
+import nltk
+nltk.download('punkt')  # Download tokenizer
+nltk.download('wordnet')  # Download lemmatizer (optional)
+nltk.download('stopwords') # Download stopwords
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+# Optional: Import Lemmatizer from nltk.stem import WordNetLemmatizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+
+
+def preprocess_text(text):
+  text = text.translate(str.maketrans('', '', string.punctuation))
+  tokens = word_tokenize(text.lower())
+
+  # Optional: Lemmatization (consider for improved text comparison)
+  # lemmatizer = WordNetLemmatizer()
+  # filtered_tokens = [lemmatizer.lemmatize(token) for token in tokens]
+
+  # Consider keeping relevant stop words depending on content type
+  stop_words = set(stopwords.words('english'))
+  filtered_tokens = [token for token in tokens if token not in stop_words]
+
+  preprocessed_text = ' '.join(filtered_tokens)
+  return preprocessed_text
+
+
+# Load your text documents (modify as needed)
+documents = []
+with open('/content/train_snli.txt', 'r') as file:  # Replace with your file path
+  for line in file:
+    documents.append(preprocess_text(line.strip()))  # Preprocess each line
+
+# User input
+user_text = input('Enter text: ')
+preprocessed_user_text = preprocess_text(user_text)
+
+
+# Choose a similarity metric (consider trying different options)
+vectorizer = TfidfVectorizer()  # One option for comparison
+# vectorizer = CountVectorizer()  # Another option
+
+tfidf_vectors = vectorizer.fit_transform(documents)
+user_tfidf_vector = vectorizer.transform([preprocessed_user_text])
+
+
+# Calculate similarity scores
+similarities = cosine_similarity(user_tfidf_vector, tfidf_vectors)
+
+
+# Report potential plagiarism (modify as needed)
+for i, similarity in enumerate(similarities[0]):
+  if similarity > 0.7:  # Adjust threshold based on your needs
+    print(f"Text {i + 1} is {similarity*100:.2f}% similar to the user-entered text.")
+    # Optionally, print the text itself or a snippet for reference
